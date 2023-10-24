@@ -2,7 +2,7 @@
 # Generative Models
 
 This repo contains personal implementations of image generation models built with Tensorflow and Keras framework.
-The models takes images as input and produces a generated images as output, this could be useful for conditional generation as well as image embedding.
+The models take images as input and produce generated images as output, this could be useful for conditional generation as well as image embedding.
 
 The proposed models are:
 - conditional U-Net ([cUnet](#cUnet));
@@ -79,7 +79,7 @@ model.summary()
 
 ### Acknowledgements
 
-For the Unet model behind the  cUnet class I thank [GianlucaCarlini](https://github.com/GianlucaCarlini). In particular check out its repo  [latent_diffusion_tf](https://github.com/GianlucaCarlini/latent_diffusion_tf) for model blocks and architectures.
+For the Unet model behind the cUnet class, I thank [GianlucaCarlini](https://github.com/GianlucaCarlini). In particular check out its repo  [latent_diffusion_tf](https://github.com/GianlucaCarlini/latent_diffusion_tf) for model blocks and architectures.
 ## VAE
 
 
@@ -113,7 +113,7 @@ VAE(
 ```python
 generate_batch(images)
 ```
-Generates a **batch of images** from a batch of input images . The method returns the generated images.
+Generates a **batch of images** from a batch of input images. The method returns the generated images.
 
 ```python
 generate_single(image)
@@ -153,8 +153,18 @@ embedding = model.generate_embedding(input_image)
 model.summary()
 
 ```
+## Bugs and feature requests
 
+Have a bug or a feature request? Please first read and search for existing and closed issues. If your problem or idea is not addressed yet, [please open a new issue](https://github.com/Torbidos7/PetWound/issues/new).
 ## Authors
 
 - [@Torbidos7](https://github.com/Torbidos7)
+
+## Thanks
+
+Thank you for coming :stuck_out_tongue_closed_eyes:
+
+## Copyright and license
+
+Code and documentation copyright 2011-2018 the authors. Code released under the [MIT License](https://github.com/Torbidos7/PetWound//blob/master/LICENSE).
 
