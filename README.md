@@ -5,8 +5,8 @@ This repo contains personal implementations of image generation models built wit
 The models take images as input and produce generated images as output, this could be useful for conditional generation as well as image embedding.
 
 The proposed models are:
-- conditional U-Net ([cUnet](#cUnet));
-- variational auto-encoder ([VAE](#VAE));
+- conditional U-Net ([cUnet](cUnet));
+- variational auto-encoder ([VAE](VAE));
 
 ## cUnet
 
@@ -80,10 +80,10 @@ model.summary()
 ### Acknowledgements
 
 For the Unet model behind the cUnet class, I thank [GianlucaCarlini](https://github.com/GianlucaCarlini). In particular check out its repo  [latent_diffusion_tf](https://github.com/GianlucaCarlini/latent_diffusion_tf) for model blocks and architectures.
-## VAE (still under development)
+## VAE 
 
 
-The `VAE` class is an implementation of a Variational Autoencoder model for image generation using TensorFlow and Keras. This model is designed for generating images and embedding from input images. The following sections describe the class and its functionalities.
+The `VAE` (still under development) class is an implementation of a Variational Autoencoder model for image generation using TensorFlow and Keras. This model is designed for generating images and embedding from input images. The following sections describe the class and its functionalities.
 
 
 ### Class Overview
