@@ -29,9 +29,9 @@ class VAE(tf.keras.Model):
         sampling(args): Samples from the latent space.
         call(inputs): Calls the VAE model.
         reconstruction_loss(inputs, reconstructed, z_mean, z_log_var): Calculates the reconstruction loss.
-        generate_batch(images, class_labels): Generates a batch of images.
-        generate_single(image, class_label): Generates a single image.
-        generate_embedding(image, class_label): Generates an embedding for an image.
+        generate_batch(images): Generates a batch of images.
+        generate_single(image): Generates a single image.
+        generate_embedding(image): Generates an embedding for an image.
         train_step(data): Performs a training step.
         test_step(data): Performs a testing step.
         summary(): Prints a summary of the encoder and decoder models.
@@ -138,13 +138,13 @@ class VAE(tf.keras.Model):
         kl_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
-    def generate_batch(self, images, class_labels):
+    def generate_batch(self, images):
         """
         Generates a batch of images.
 
         Args:
             images (tensor): Input tensor.
-            class_labels (tensor): Class label tensor.
+          
 
         Returns:
             tensor: Generated tensor.
@@ -153,13 +153,13 @@ class VAE(tf.keras.Model):
         generated = self.decoder(z_mean)
         return generated
 
-    def generate_single(self, image, class_label):
+    def generate_single(self, image):
         """
         Generates a single image.
 
         Args:
             image (tensor): Input tensor.
-            class_label (tensor): Class label tensor.
+          
 
         Returns:
             tensor: Generated tensor.
@@ -169,13 +169,13 @@ class VAE(tf.keras.Model):
         generated = self.decoder(z_mean)
         return generated
 
-    def generate_embedding(self, image, class_label):
+    def generate_embedding(self, image):
         """
         Generates an embedding for an image.
 
         Args:
             image (tensor): Input tensor.
-            class_label (tensor): Class label tensor.
+          
 
         Returns:
             tensor: Embedding tensor.
