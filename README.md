@@ -5,8 +5,8 @@ This repo contains personal implementations of image generation models built wit
 The models take images as input and produce generated images as output, this could be useful for conditional generation as well as image embedding.
 
 The proposed models are:
-- conditional U-Net ([cUnet](cUnet));
-- variational auto-encoder ([VAE](VAE));
+- conditional U-Net ([cUnet](#cunet));
+- variational auto-encoder ([VAE](#vae));
 
 ## cUnet
 
