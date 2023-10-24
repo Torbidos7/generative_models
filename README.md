@@ -80,7 +80,7 @@ model.summary()
 ### Acknowledgements
 
 For the Unet model behind the cUnet class, I thank [GianlucaCarlini](https://github.com/GianlucaCarlini). In particular check out its repo  [latent_diffusion_tf](https://github.com/GianlucaCarlini/latent_diffusion_tf) for model blocks and architectures.
-## VAE
+## VAE (still under development)
 
 
 The `VAE` class is an implementation of a Variational Autoencoder model for image generation using TensorFlow and Keras. This model is designed for generating images and embedding from input images. The following sections describe the class and its functionalities.
