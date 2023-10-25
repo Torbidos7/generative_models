@@ -155,7 +155,7 @@ model.summary()
 ```
 ## Bugs and feature requests
 
-Have a bug or a feature request? Please first read and search for existing and closed issues. If your problem or idea is not addressed yet, [please open a new issue](https://github.com/Torbidos7/PetWound/issues/new).
+Have a bug or a feature request? Please first read and search for existing and closed issues. If your problem or idea is not addressed yet, [please open a new issue](https://github.com/Torbidos7/generative_models/issues/new).
 ## Authors
 
 - [@Torbidos7](https://github.com/Torbidos7)
@@ -166,5 +166,5 @@ Thank you for coming :stuck_out_tongue_closed_eyes:
 
 ## Copyright and license
 
-Code and documentation copyright 2011-2018 the authors. Code released under the [MIT License](https://github.com/Torbidos7/PetWound//blob/master/LICENSE).
+Code and documentation copyright 2011-2018 the authors. Code released under the [MIT License](https://github.com/Torbidos7/generative_models//blob/master/LICENSE).
 
