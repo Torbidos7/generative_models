@@ -1,10 +1,10 @@
 import keras
 import tensorflow as tf 
-from keras.layers import Conv2D, Conv2DTranspose, Input, Flatten, Dense, Lambda, Reshape
-from keras.models import Model
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, Input, Flatten, Dense, Lambda, Reshape
+from tensorflow.keras.models import Model
 import numpy as np
 import matplotlib.pyplot as plt
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 class VAE(tf.keras.Model):
     """
@@ -13,8 +13,8 @@ class VAE(tf.keras.Model):
     Args:
         image_shape (tuple): Shape of the input image.
         depths (list): List of integers representing the number of filters in each convolutional layer.
-        initial_dim (int): Dimension of the first fully connected layer.
-        latent_dim (int): Dimension of the latent space.
+        dense_dim (int): Dimension of the first fully connected layer.
+        latent_dim (int): Dimension of the latent space.co
 
     Attributes:
         encoder (keras.Model): Encoder part of the VAE model.
@@ -37,11 +37,11 @@ class VAE(tf.keras.Model):
         summary(): Prints a summary of the encoder and decoder models.
     """
 
-    def __init__(self, image_shape, depths, initial_dim, latent_dim, **kwargs):
+    def __init__(self, image_shape, depths, dense_dim, latent_dim, **kwargs):
         super(VAE, self).__init__(**kwargs)
         self.image_shape = image_shape
         self.depths = depths
-        self.initial_dim = initial_dim
+        self.dense_dim = dense_dim
         self.latent_dim = latent_dim
 
         self.encoder = self.build_encoder()
@@ -64,9 +64,10 @@ class VAE(tf.keras.Model):
             x = Conv2D(depth, 3, strides=2, padding='same', activation='relu')(x)
             x = Conv2D(depth, 3, strides=1, padding='same', activation='relu')(x)
         x = Flatten()(x)
-        x = Dense(self.initial_dim, activation='relu')(x)
+        x = Dense(self.dense_dim, activation='relu')(x)
         z_mean = Dense(self.latent_dim)(x)
         z_log_var = Dense(self.latent_dim)(x)
+        #reparameterization trick
         z = Lambda(self.sampling)([z_mean, z_log_var])
         encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
         return encoder
@@ -79,7 +80,8 @@ class VAE(tf.keras.Model):
             keras.Model: Decoder part of the VAE model.
         """
         latent_inputs = Input(shape=(self.latent_dim,))
-        x = Dense(self.initial_dim, activation='relu')(latent_inputs)
+        x = Dense(self.dense_dim, activation='relu')(latent_inputs)
+        # dimensions must be reshapable to the initial image dimensions
         x = Dense(self.depths[-1] * self.image_shape[0] // (2 ** len(self.depths)) * self.image_shape[1] // (2 ** len(self.depths)), activation='relu')(x)
         x = Reshape((self.image_shape[0] // (2 ** len(self.depths)), self.image_shape[1] // (2 ** len(self.depths)), self.depths[-1]))(x)
         for depth in reversed(self.depths[:-1]):
@@ -135,7 +137,7 @@ class VAE(tf.keras.Model):
             tensor: Reconstruction loss tensor.
         """
         reconstruction_loss = self.mse(inputs, reconstructed)
-        kl_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
+        kl_loss = self.kld(z_mean, z_log_var)#-0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
         return K.mean(reconstruction_loss + kl_loss)
 
     def generate_batch(self, images):

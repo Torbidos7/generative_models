@@ -96,7 +96,7 @@ The `VAE` class is a Variational Autoencoder model with an encoder and decoder. 
 VAE(
     image_shape,
     depths,
-    initial_dim,
+    dense_dim,
     latent_dim,
     **kwargs
 )
@@ -104,7 +104,7 @@ VAE(
 
 - image_shape: The shape of the input image.
 - depths: A list of integers representing the number of filters in each convolutional layer.
-- initial_dim: The dimension of the first fully connected layer.
+- dense_dim: The dimension of the first fully connected layer.
 - latent_dim: The dimension of the latent space.
 - **kwargs: Additional keyword arguments for configuring the U-Net model.
 
@@ -132,7 +132,7 @@ To use the `VAE` class, you can create an instance of the class, compile it, and
 **Example Usage:**
 ```python
 # Create a VAE model
-model = VAE(image_shape=(64, 64, 3), depths=[32, 64], initial_dim=128, latent_dim=16)
+model = VAE(image_shape=(64, 64, 3), depths=[32, 64], dense_dim=128, latent_dim=16)
 
 # Compile the model with optimizer and loss function
 model.compile(optimizer="adam", loss="mse")
