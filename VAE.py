@@ -113,9 +113,39 @@ class VAE(tf.keras.Model):
         self.encoder = self.build_encoder()
         self.decoder = self.build_decoder()
 
-        self.mse = tf.keras.metrics.MeanSquaredError(name='mse')
-        self.mae = tf.keras.metrics.MeanAbsoluteError(name='mae')
-        self.kld = tf.keras.metrics.KLDivergence(name='kld')
+        self.total_loss_tracker = keras.metrics.Mean(name="loss")
+        self.reconstruction_loss_tracker = keras.metrics.Mean(
+            name="reconstruction_loss"
+        )
+        self.kl_loss_tracker = keras.metrics.Mean(name="kl_loss")
+        # self.mse = tf.keras.metrics.MeanSquaredError(name='mse')
+        # self.mae = tf.keras.metrics.MeanAbsoluteError(name='mae')
+        # self.kld = tf.keras.metrics.KLDivergence(name='kld')
+
+    @property
+    def metrics(self):
+        return [
+            self.total_loss_tracker,
+            self.reconstruction_loss_tracker,
+            self.kl_loss_tracker,
+            # self.mse,
+            # self.mae,
+            # self.kld
+        ]
+
+    def sampling(self, args):
+        """
+        Samples from the latent space.
+
+        Args:
+            args (list): List of tensors representing the mean and log variance of the latent space.
+
+        Returns:
+            tensor: Sampled tensor from the latent space.
+        """
+        z_mean, z_log_var = args
+        epsilon = K.random_normal(shape=(K.shape(z_mean)[0], self.latent_dim), mean=0., stddev=1.)
+        return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
     def build_encoder(self):
         """
@@ -163,19 +193,27 @@ class VAE(tf.keras.Model):
         decoder = Model(latent_inputs, x, name='decoder')
         return decoder
 
-    def sampling(self, args):
-        """
-        Samples from the latent space.
+    # # #trick to pass los function to add_loss
+    # # def reconstruction_loss_carrier():
+        
+    # def reconstruction_loss(self, inputs, reconstructed, z_mean, z_log_var):
+    #     """
+    #     Calculates the reconstruction loss.
 
-        Args:
-            args (list): List of tensors representing the mean and log variance of the latent space.
+    #     Args:
+    #         inputs (tensor): Input tensor.
+    #         reconstructed (tensor): Reconstructed tensor.
+    #         z_mean (tensor): Mean tensor of the latent space.
+    #         z_log_var (tensor): Log variance tensor of the latent space.
 
-        Returns:
-            tensor: Sampled tensor from the latent space.
-        """
-        z_mean, z_log_var = args
-        epsilon = K.random_normal(shape=(K.shape(z_mean)[0], self.latent_dim), mean=0., stddev=1.)
-        return z_mean + K.exp(0.5 * z_log_var) * epsilon
+    #     Returns:
+    #         tensor: Reconstruction loss tensor.
+    #     """
+    #     reconstruction_loss = self.mse(inputs, reconstructed)
+    #     kl_loss = self.kld(z_mean, z_log_var)#-0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
+    #     return tf.reduce_mean(reconstruction_loss, kl_loss)
+    #     # return reconstruction_loss
+    
 
     def call(self, inputs):
         """
@@ -187,31 +225,101 @@ class VAE(tf.keras.Model):
         Returns:
             tensor: Reconstructed tensor.
         """
-        z_mean, z_log_var, z = self.encoder(inputs)
+        _, _, z = self.encoder(inputs)
         reconstructed = self.decoder(z)
-        self.add_loss(self.reconstruction_loss(inputs, reconstructed, z_mean, z_log_var), name='loss')
-        self.add_metric(self.mse(inputs, reconstructed), name='mse')
-        self.add_metric(self.mae(inputs, reconstructed), name='mae')
-        self.add_metric(self.kld(z_mean, z_log_var), name='kld')
+        # self.add_loss(self.kld(z_mean, z_log_var))
+        # self.add_metric(self.mse(inputs, reconstructed), name='mse')
+        # self.add_metric(self.mae(inputs, reconstructed), name='mae')
+        # self.add_metric(self.kld(z_mean, z_log_var), name='kld')
         return reconstructed
 
-    def reconstruction_loss(self, inputs, reconstructed, z_mean, z_log_var):
+
+    def train_step(self, data):
         """
-        Calculates the reconstruction loss.
+        Performs a training step.
 
         Args:
-            inputs (tensor): Input tensor.
-            reconstructed (tensor): Reconstructed tensor.
-            z_mean (tensor): Mean tensor of the latent space.
-            z_log_var (tensor): Log variance tensor of the latent space.
+            data (tensor): Input tensor.
 
         Returns:
-            tensor: Reconstruction loss tensor.
+            dict: Dictionary of metric names and results.
         """
-        reconstruction_loss = self.mse(inputs, reconstructed)
-        kl_loss = self.kld(z_mean, z_log_var)#-0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
-        return K.mean(reconstruction_loss + kl_loss)
+        images = data
 
+        with tf.GradientTape() as tape:
+            z_mean, z_log_var, z = self.encoder(images, training=True)
+            reconstructed = self.decoder(z, training=True)
+            reconstruction_loss = tf.reduce_mean(
+                tf.reduce_sum(
+                    tf.keras.losses.mse(data, reconstructed))
+                )
+           
+            kl_loss = tf.keras.losses.KLDivergence(reduction=tf.keras.losses.Reduction.SUM)(z_mean, z_log_var)
+            kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss))
+            loss = reconstruction_loss + kl_loss
+            # loss = self.reconstruction_loss_carrier()(images, reconstructed, z_mean, z_log_var)
+
+        gradients = tape.gradient(loss, self.trainable_weights)
+        self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+
+        self.total_loss_tracker.update_state(loss)
+        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
+        self.kl_loss_tracker.update_state(kl_loss)
+        return {
+            "loss": self.total_loss_tracker.result(),
+            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
+            "kl_loss": self.kl_loss_tracker.result(),
+            }
+
+    def test_step(self, data):
+        """
+        Performs a testing step.
+
+        Args:
+            data (tensor): Input tensor.
+
+        Returns:
+            dict: Dictionary of metric names and results.
+        """
+        images = data
+
+        z_mean, z_log_var , z = self.encoder(images, training=False)
+        reconstructed = self.decoder(z, training=False)
+
+        reconstruction_loss = tf.reduce_mean(
+                tf.reduce_sum(
+                    tf.keras.losses.mse(data, reconstructed))
+                )
+        
+        kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
+        kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss))
+        loss = reconstruction_loss + kl_loss
+
+        self.total_loss_tracker.update_state(loss)
+        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
+        self.kl_loss_tracker.update_state(kl_loss)
+
+        return {
+            "loss": self.total_loss_tracker.result(),
+            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
+            "kl_loss": self.kl_loss_tracker.result(),
+            }
+
+    def summary(self):
+        """
+        Prints a summary of the encoder and decoder models.
+        """
+        self.encoder.summary()
+        self.decoder.summary()
+        encoder_trainable_count = np.sum([K.count_params(w) for w in self.encoder.trainable_weights], dtype=np.int32)
+        decoder_trainable_count = np.sum([K.count_params(w) for w in self.decoder.trainable_weights], dtype=np.int32)
+        print('#' * 80)
+        print('VAE Summary' + '\n')
+        print("Total Parameters:", "{:,}".format(self.encoder.count_params() + self.decoder.count_params()))
+        print('Trainable Parameters:', "{:,}".format(encoder_trainable_count + decoder_trainable_count))
+        print('Non-Trainable Parameters:', "{:,}".format(self.encoder.count_params() + self.decoder.count_params() - encoder_trainable_count - decoder_trainable_count))        
+        print('#' * 80)
+       
     def generate_batch(self, images):
         """
         Generates a batch of images.
@@ -257,62 +365,4 @@ class VAE(tf.keras.Model):
         images = tf.expand_dims(image, axis=0)
         _, _, z = self.encoder(images)
         return z
-
-    def train_step(self, data):
-        """
-        Performs a training step.
-
-        Args:
-            data (tuple): Tuple of input tensor, target tensor, and class label tensor.
-
-        Returns:
-            dict: Dictionary of metric names and results.
-        """
-        images, _, labels = data
-
-        with tf.GradientTape() as tape:
-            z_mean, z_log_var, z = self.encoder(images)
-            reconstructed = self.decoder(z)
-            loss = self.reconstruction_loss(images, reconstructed, z_mean, z_log_var)
-
-        gradients = tape.gradient(loss, self.trainable_weights)
-        self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
-
-        self.compiled_metrics.update_state(labels, reconstructed)
-        return {m.name: m.result() for m in self.metrics}
-
-    def test_step(self, data):
-        """
-        Performs a testing step.
-
-        Args:
-            data (tuple): Tuple of input tensor, target tensor, and class label tensor.
-
-        Returns:
-            dict: Dictionary of metric names and results.
-        """
-        images, _, labels = data
-
-        z_mean, z_log_var, z = self.encoder(images)
-        reconstructed = self.decoder(z)
-        loss = self.reconstruction_loss(images, reconstructed, z_mean, z_log_var)
-
-        self.compiled_metrics.update_state(labels, reconstructed)
-        return {m.name: m.result() for m in self.metrics}
-
-    def summary(self):
-        """
-        Prints a summary of the encoder and decoder models.
-        """
-        self.encoder.summary()
-        self.decoder.summary()
-        encoder_trainable_count = np.sum([K.count_params(w) for w in self.encoder.trainable_weights], dtype=np.int32)
-        decoder_trainable_count = np.sum([K.count_params(w) for w in self.decoder.trainable_weights], dtype=np.int32)
-        print('#' * 80)
-        print('VAE Summary' + '\n')
-        print("Total Parameters:", "{:,}".format(self.encoder.count_params() + self.decoder.count_params()))
-        print('Trainable Parameters:', "{:,}".format(encoder_trainable_count + decoder_trainable_count))
-        print('Non-Trainable Parameters:', "{:,}".format(self.encoder.count_params() + self.decoder.count_params() - encoder_trainable_count - decoder_trainable_count))        
-        print('#' * 80)
-       
         
