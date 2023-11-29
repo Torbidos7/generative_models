@@ -249,11 +249,8 @@ class VAE(tf.keras.Model):
         with tf.GradientTape() as tape:
             z_mean, z_log_var, z = self.encoder(images, training=True)
             reconstructed = self.decoder(z, training=True)
-            reconstruction_loss = tf.reduce_mean(
-                tf.reduce_sum(
-                    tf.keras.losses.mse(data, reconstructed))
-                )
-           
+            reconstruction_loss = tf.reduce_mean(tf.reduce_sum(
+                            tf.keras.losses.mse(data, reconstructed)))
             kl_loss = tf.keras.losses.KLDivergence(reduction=tf.keras.losses.Reduction.SUM)(z_mean, z_log_var)
             kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss))
             loss = reconstruction_loss + kl_loss
@@ -309,6 +306,7 @@ class VAE(tf.keras.Model):
         """
         Prints a summary of the encoder and decoder models.
         """
+        print('Network summary' + '\n')
         self.encoder.summary()
         self.decoder.summary()
         encoder_trainable_count = np.sum([K.count_params(w) for w in self.encoder.trainable_weights], dtype=np.int32)
