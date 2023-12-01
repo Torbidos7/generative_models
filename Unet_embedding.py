@@ -133,7 +133,7 @@ class Unet(tf.keras.models.Model):
             '''
             # images = tf.expand_dims(image, axis=0)
             # classes = tf.expand_dims(class_label, axis=0)
-            layer_name = 'residual_block_13'
+            layer_name = 'residual_block_10'
             intermediate_layer_model = Model(inputs=self.cUnet.input,
                                                 outputs=self.cUnet.get_layer(layer_name).output)
             embedding = intermediate_layer_model.predict([image], batch_size=1, steps=1)
@@ -151,7 +151,7 @@ class Unet(tf.keras.models.Model):
             Returns:
                 embedding (tf.Tensor): The generated embedding.
             '''
-            layer_name = 'residual_block_13'
+            layer_name = 'residual_block_10'
             intermediate_layer_model = Model(inputs=self.cUnet.input,
                                                 outputs=self.cUnet.get_layer(layer_name).output)
             embedding = intermediate_layer_model.predict([images], batch_size=1, steps=1)
